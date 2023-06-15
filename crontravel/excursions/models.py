@@ -75,6 +75,10 @@ class Excursion(models.Model):
     price_children = models.PositiveIntegerField(
         verbose_name='Стоимость для ребенка'
     )
+    duration = models.CharField(
+        verbose_name='Длительность экскурсии',
+        max_length=64
+    )
     description = models.TextField(verbose_name='Описание')
     author = models.ForeignKey(
         get_user_model(),
