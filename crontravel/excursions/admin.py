@@ -7,7 +7,8 @@ from .models import (
     ExcursionNotIncludePrice,
     ExcursionIncludePrice,
     ExcursionImage,
-    Category
+    Category,
+    Review
 )
 
 
@@ -80,7 +81,6 @@ class ExcursionAdmin(admin.ModelAdmin):
         'city',
         'type_excursion',
         'transport',
-
     )
 
 
@@ -89,4 +89,21 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
+    )
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'excursion',
+        'name',
+        'ip',
+        'pub_date',
+        'text',
+        'score',
+    )
+    list_filter = (
+        'excursion',
+        'score',
     )

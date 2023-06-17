@@ -6,7 +6,8 @@ from excursions.models import (
     Company,
     ExcursionProgram,
     ExcursionNotIncludePrice,
-    ExcursionIncludePrice
+    ExcursionIncludePrice,
+    Review
 )
 
 
@@ -50,12 +51,37 @@ class ExcursionIncludePriceSerializer(serializers.ModelSerializer):
         fields = ('service', )
 
 
+class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор получение отзывов."""
+    class Meta:
+        model = Review
+        fields = (
+            'name',
+            'pub_date',
+            'text',
+            'score'
+        )
+
+
+class ReviewWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор добавления отзывов."""
+    class Meta:
+        model = Review
+        fields = (
+            'name',
+            'text',
+            'score'
+        )
+
+
 class ExcursionListSerializer(serializers.ModelSerializer):
     """Сериализатор что не включено в стоимость экскурсий."""
     images = ExcursionImageSerializer(many=True, read_only=True)
     transport = serializers.CharField(
         source='get_transport_display'
     )
+    rating = serializers.FloatField()
+    count_reviews = serializers.IntegerField()
 
     class Meta:
         model = Excursion
@@ -66,9 +92,9 @@ class ExcursionListSerializer(serializers.ModelSerializer):
             'size_group',
             'transport',
             'price',
-            'images'
-            # 'rating',
-            # 'count_reviews'
+            'images',
+            'rating',
+            'count_reviews'
         )
 
 
@@ -87,6 +113,10 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
         many=True,
         read_only=True
     )
+    # reviews = ReviewSerializer(
+    #     many=True,
+    #     read_only=True
+    # )
     class Meta:
         model = Excursion
         fields = (
@@ -103,6 +133,5 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
             'starting_point',
             'company',
             'type_excursion',
-            # 'reviews'
         )
 

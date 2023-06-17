@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 PERSON = 'PRS'
 GROUP = 'GRP'
@@ -236,8 +236,43 @@ class ExcursionImage(models.Model):
         verbose_name_plural = 'Фото экскурсий'
 
 
-# - Отзывы - список отзывов со следующими полями
-#     - Имя
-#     - Дата
-#     - Оценка
-#     - Описание
+class Review(models.Model):
+    """Модель отзывов."""
+    excursion = models.ForeignKey(
+        'Excursion',
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Экскурсия',
+    )
+    name = models.CharField(
+        verbose_name='Имя',
+        max_length=32
+    )
+    ip = models.GenericIPAddressField(
+        verbose_name='IP адрес',
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата и время публикации',
+        auto_now_add=True
+    )
+    text = models.TextField(
+        verbose_name='Текст (описание) отзыва',
+    )
+    score = models.PositiveIntegerField(
+        default=1,
+        validators=[
+            MaxValueValidator(5),
+            MinValueValidator(1)
+        ],
+        verbose_name='Оценка экскурсии',
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         name='unique_review',
+        #         fields=['ip', 'excursion'],
+        #     )
+        # ]
