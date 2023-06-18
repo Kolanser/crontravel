@@ -102,6 +102,7 @@ class ReviewAdmin(admin.ModelAdmin):
         'pub_date',
         'text',
         'score',
+        'public'
     )
     list_filter = (
         'excursion',

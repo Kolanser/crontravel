@@ -62,7 +62,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         excursion_id = int(self.kwargs.get('excursion_id'))
         excursion = get_object_or_404(Excursion, id=excursion_id)
-        return excursion.reviews.all()
+        return excursion.reviews.filter(public=True)
 
     def perform_create(self, serializer):
         excursion_id = self.kwargs.get('excursion_id')
@@ -70,5 +70,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         ip=self.get_client_ip(self.request)
         serializer.save(
             excursion=excursion,
-            ip=ip
+            ip=ip,
+            public=False
         )

@@ -266,7 +266,10 @@ class Review(models.Model):
         ],
         verbose_name='Оценка экскурсии',
     )
-
+    public = models.BooleanField(
+        verbose_name='Отобран модератором',
+        default=False
+    )
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
