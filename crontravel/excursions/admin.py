@@ -10,6 +10,7 @@ from .models import (
     Category,
     Review
 )
+from django.db.models import Avg, Count
 
 
 @admin.register(Company)
@@ -51,15 +52,40 @@ class ExcursionImageInline(admin.TabularInline):
 
 @admin.register(Excursion)
 class ExcursionAdmin(admin.ModelAdmin):
+    """Админка экскурсий."""
+    def show_description(self, object):
+        """
+        Отображение ограниченного количества
+        символов описания в админке.
+        """
+        len_description = 32
+        return object.description[:len_description] + '...'
+    show_description.short_description = 'Описание'
+
+    def rating(self, object):
+        """
+        Отображение рейтинга.
+        """
+        return object.reviews.filter(
+            public=True
+        ).aggregate(Avg('score'))['score__avg']
+    rating.short_description = 'Рейтинг'
+
+    def count_reviews(self, object):
+        """
+        Отображение рейтинга.
+        """
+        return object.reviews.filter(public=True).count()
+    count_reviews.short_description = 'Количество оценок'
+
     list_display = (
         'id',
         'name',
         'price',
         'children_age',
         'price_children',
-        'description',
+        'show_description',
         'author',
-        'slug',
         'gathering_place',
         'company',
         'type_excursion',
@@ -67,6 +93,8 @@ class ExcursionAdmin(admin.ModelAdmin):
         'size_group',
         'starting_point',
         'city',
+        'rating',
+        'count_reviews'
     )
     prepopulated_fields = {'slug': ('name',)}
     inlines = (
