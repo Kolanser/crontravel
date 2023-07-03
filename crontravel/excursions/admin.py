@@ -8,9 +8,10 @@ from .models import (
     ExcursionIncludePrice,
     ExcursionImage,
     Category,
-    Review
+    Review,
+    Application
 )
-from django.db.models import Avg, Count
+from django.db.models import Avg
 
 
 @admin.register(Company)
@@ -135,4 +136,20 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = (
         'excursion',
         'score',
+    )
+
+
+@admin.register(Application)
+class ApplicationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'excursion',
+        'phone_number',
+        'number_people',
+        'number_children',
+        'date',
+        'comment',
+    )
+    list_filter = (
+        'excursion',
     )

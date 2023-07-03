@@ -1,6 +1,13 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator
+)
+from django.core.exceptions import ValidationError
+import datetime as dt
+
 
 PERSON = 'PRS'
 GROUP = 'GRP'
@@ -16,6 +23,13 @@ TRANSPORT_CHOICES = [
 ]
 
 MAX_AGE_CHILDREN = 17
+
+
+def date_validator(date):
+    """Проверка, что дата не меньше текущей."""
+    if date < dt.date.today():
+        raise ValidationError('Желаемая дата не может быть меньше текущей')
+    return date
 
 
 class Company(models.Model):
@@ -270,6 +284,7 @@ class Review(models.Model):
         verbose_name='Отобран модератором',
         default=False
     )
+
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
@@ -279,3 +294,53 @@ class Review(models.Model):
         #         fields=['ip', 'excursion'],
         #     )
         # ]
+
+
+class Application(models.Model):
+    """Модель заявок на бронирование экскурсии."""
+
+    message_help = 'Номер телефона должен быть в формате +7(xxx)xxx-xx-xx'
+    excursion = models.ForeignKey(
+        'Excursion',
+        on_delete=models.CASCADE,
+        related_name='applications',
+        verbose_name='Экскурсия',
+    )
+    name = models.CharField('Имя', max_length=64)
+    phone_number = models.CharField(
+        'Номер телефона',
+        max_length=17,
+        validators=[
+            RegexValidator(
+                r'^(\+7\([0-9]{3}\)[0-9]{3}-[0-9]{2}-[0-9]{2})$',
+                message=message_help,
+            )
+        ],
+        help_text=message_help
+    )
+    number_people = models.PositiveIntegerField(
+        verbose_name='Взрослые',
+        help_text='Количество взрослых'
+    )
+    number_children = models.PositiveIntegerField(
+        verbose_name='Дети',
+        help_text='Количество детей',
+        blank=True,
+        null=True
+    )
+    date = models.DateField(
+        'Дата',
+        help_text='Желаемая дата',
+        validators=(date_validator, )
+    )
+    comment = models.CharField(
+        'Комментарий',
+        max_length=256
+    )
+
+    class Meta:
+        verbose_name = 'Заявка на бронирование экскурсии'
+        verbose_name_plural = 'Заявки на бронирование экскурсии'
+
+    def __str__(self):
+        return self.comment

@@ -7,7 +7,8 @@ from excursions.models import (
     ExcursionProgram,
     ExcursionNotIncludePrice,
     ExcursionIncludePrice,
-    Review
+    Review,
+    Application
 )
 
 
@@ -17,11 +18,13 @@ class CompanySerializer(serializers.ModelSerializer):
         model = Company
         fields = ('id', 'name', 'image', )
 
+
 class CitySerializer(serializers.ModelSerializer):
     """Сериализатор городов (локаций)."""
     class Meta:
         model = City
         fields = ('id', 'name', 'description', )
+
 
 class ExcursionImageSerializer(serializers.ModelSerializer):
     """Сериализатор фото экскурсий."""
@@ -117,6 +120,7 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
     #     many=True,
     #     read_only=True
     # )
+
     class Meta:
         model = Excursion
         fields = (
@@ -135,3 +139,16 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
             'type_excursion',
         )
 
+
+class ApplicationSerializer(serializers.ModelSerializer):
+    """Сериализатор добавления отзывов."""
+    class Meta:
+        model = Application
+        fields = (
+            'name',
+            'phone_number',
+            'number_people',
+            'number_children',
+            'date',
+            'comment',
+        )

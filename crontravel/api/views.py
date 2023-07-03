@@ -1,17 +1,20 @@
-from rest_framework import mixins, viewsets
-from excursions.models import City, Excursion, Company, Review
+from rest_framework import mixins, viewsets, status
+from excursions.models import City, Excursion, Company
 from api.serializers import (
     CitySerializer,
     ExcursionRetrieveSerializer,
     ExcursionListSerializer,
     CompanySerializer,
     ReviewSerializer,
-    ReviewWriteSerializer
+    ReviewWriteSerializer,
+    ApplicationSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ExcursionFilter
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 
 class CityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -35,6 +38,22 @@ class ExcursionViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == 'list':
             return ExcursionListSerializer
         return ExcursionRetrieveSerializer
+
+    @action(methods=['post'], detail=True)
+    def application(self, request, pk):
+        """Подать заявку на экскурсию."""
+        serializer = ApplicationSerializer(data=request.data)
+        if serializer.is_valid():
+            excursion = self.get_object()
+            serializer.save(excursion=excursion)
+            return Response(
+                {'status': 'Заявка успешно отправлена'},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class CompanyViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -67,7 +86,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         excursion_id = self.kwargs.get('excursion_id')
         excursion = get_object_or_404(Excursion, id=excursion_id)
-        ip=self.get_client_ip(self.request)
+        ip = self.get_client_ip(self.request)
         serializer.save(
             excursion=excursion,
             ip=ip,
