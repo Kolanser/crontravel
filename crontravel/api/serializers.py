@@ -79,7 +79,7 @@ class ReviewWriteSerializer(serializers.ModelSerializer):
 
 class ExcursionListSerializer(serializers.ModelSerializer):
     """Сериализатор что не включено в стоимость экскурсий."""
-    images = ExcursionImageSerializer(many=True, read_only=True)
+    image = serializers.SerializerMethodField(read_only=True)
     transport = serializers.CharField(
         source='get_transport_display'
     )
@@ -95,14 +95,21 @@ class ExcursionListSerializer(serializers.ModelSerializer):
             'size_group',
             'transport',
             'price',
-            'images',
+            'image',
             'rating',
             'count_reviews'
         )
 
+    def get_image(self, obj):
+        if obj.images.exists():
+            request = self.context.get('request')
+            image_url = obj.images.first().image.url
+            return request.build_absolute_uri(image_url)
+
 
 class ExcursionRetrieveSerializer(ExcursionListSerializer):
     """Сериализатор экскурсий."""
+    images = ExcursionImageSerializer(many=True, read_only=True)
     company = CompanySerializer(read_only=True)
     type_excursion = serializers.CharField(
         source='get_type_excursion_display'
