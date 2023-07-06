@@ -19,9 +19,7 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'image',
-        'slug',
     )
-    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(City)
@@ -30,9 +28,7 @@ class CityAdmin(admin.ModelAdmin):
         'id',
         'name',
         'description',
-        'slug',
     )
-    prepopulated_fields = {'slug': ('name',)}
 
 
 class ExcursionProgramInline(admin.TabularInline):
@@ -97,7 +93,6 @@ class ExcursionAdmin(admin.ModelAdmin):
         'rating',
         'count_reviews'
     )
-    prepopulated_fields = {'slug': ('name',)}
     inlines = (
         ExcursionProgramInline,
         ExcursionNotIncludePriceInline,

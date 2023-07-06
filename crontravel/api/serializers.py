@@ -116,10 +116,7 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
         many=True,
         read_only=True
     )
-    # reviews = ReviewSerializer(
-    #     many=True,
-    #     read_only=True
-    # )
+
 
     class Meta:
         model = Excursion

@@ -15,6 +15,7 @@ from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
 
 class CityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -33,6 +34,7 @@ class ExcursionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExcursionRetrieveSerializer
     filter_backends = (DjangoFilterBackend, )
     filterset_class = ExcursionFilter
+    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.action == 'list':

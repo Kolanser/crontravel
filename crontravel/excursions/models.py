@@ -42,7 +42,6 @@ class Company(models.Model):
         verbose_name='Фото (логотип) компании',
         upload_to='excursions/',
     )
-    slug = models.SlugField(unique=True)
 
     class Meta:
         verbose_name = 'Туристическая компания'
@@ -101,7 +100,6 @@ class Excursion(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
-    slug = models.SlugField(unique=True)
     gathering_place = models.CharField(
         'Место сбора',
         help_text='Адрес и координаты(для отображения точки на карте)',
@@ -161,7 +159,6 @@ class City(models.Model):
         unique=True
     )
     description = models.TextField(verbose_name='Описание города')
-    slug = models.SlugField(unique=True)
 
     class Meta:
         verbose_name = 'Город'
