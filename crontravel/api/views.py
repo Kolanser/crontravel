@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.filters import SearchFilter
 
 
 class CityViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -35,6 +36,8 @@ class ExcursionViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = ExcursionFilter
     pagination_class = PageNumberPagination
+    filter_backends = (SearchFilter, )
+    search_fields = ('city__name', 'gathering_place', 'starting_point', )
 
     def get_serializer_class(self):
         if self.action == 'list':

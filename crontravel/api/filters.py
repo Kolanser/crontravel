@@ -11,7 +11,6 @@ class ExcursionFilter(FilterSet):
     min_price = NumberFilter(field_name='price', lookup_expr='gte')
     max_price = NumberFilter(field_name='price', lookup_expr='lte')
 
-
     class Meta:
         model = Excursion
         fields = (
@@ -23,4 +22,4 @@ class ExcursionFilter(FilterSet):
             'max_rating',
             'min_price',
             'max_price',
-            )
+        )

@@ -117,7 +117,6 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
         read_only=True
     )
 
-
     class Meta:
         model = Excursion
         fields = (
@@ -139,6 +138,7 @@ class ExcursionRetrieveSerializer(ExcursionListSerializer):
 
 class ApplicationSerializer(serializers.ModelSerializer):
     """Сериализатор добавления отзывов."""
+
     class Meta:
         model = Application
         fields = (
