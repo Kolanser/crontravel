@@ -1,17 +1,56 @@
 from rest_framework import serializers
 
 
+class ExcursionMetaSerializer(serializers.Serializer):
+    id = serializers.IntegerField(source='meta_id')
+
+
 class ExcursionSerializer(serializers.Serializer):
     """Сериализатор для отправки обратной связи."""
-    post_title = serializers.CharField(
-        label='nbnfk',
-        help_text='nbnfk организации',
-        # max_length=100,
-    )
-    ID = serializers.IntegerField(
 
+    id = serializers.IntegerField(
+        source='ID',
+        read_only=True,
     )
-
+    title = serializers.CharField(
+        label='Наименование экскурсии',
+        source='post_title'
+    )
+    duration = serializers.CharField(
+        label='Длительность экскурсии',
+        source='excursion-duration',
+        required=False
+    )
+# - Количество человек в экскурсии
+    movement = serializers.CharField(
+        label='Транспорт',
+        source='excursion-movement',
+        required=False
+    )
+    price = serializers.CharField(
+        label='Цена за человека',
+        source='tour-price',
+        required=False
+    )
+    photo = serializers.CharField(
+        label='Фото',
+        required=False 
+    )
+    raiting = serializers.FloatField(
+        label='Оценка(рейтинг)',
+        required=False 
+    )
+    comment_count = serializers.IntegerField(
+        label='Количество комментариев',
+        help_text = 'dddd',
+        read_only=True,
+    )
+    band_size = serializers.CharField(
+        label='Количество человек в экскурсии',
+        source='excursion-band-size',
+        required=False 
+    )
+ 
 
 class LocationListSerializer(serializers.Serializer):
     """Сериализатор для списка городов."""
@@ -22,8 +61,47 @@ class LocationListSerializer(serializers.Serializer):
 class LocationListExcursionsSerializer(serializers.Serializer):
     """Сериализатор для списка городов."""
     id = serializers.IntegerField(source='ID')
-    title = serializers.CharField(source='post_title')
-
+    title = serializers.CharField(
+        label='Наименование экскурсии',
+        source='post_title'
+    )
+    duration = serializers.CharField(
+        label='Длительность экскурсии',
+        source='excursion-duration',
+        required=False
+    )
+    movement = serializers.CharField(
+        label='Транспорт',
+        source='excursion-movement',
+        required=False
+    )
+    price = serializers.CharField(
+        label='Цена за человека',
+        source='tour-price',
+        required=False
+    )
+    photo = serializers.CharField(
+        label='Фото',
+        required=False 
+    )
+    raiting = serializers.FloatField(
+        label='Оценка(рейтинг)',
+        required=False 
+    )
+    comment_count = serializers.IntegerField(
+        label='Количество комментариев',
+        help_text = 'dddd',
+        read_only=True,
+    )
+    band_size = serializers.CharField(
+        label='Количество человек в экскурсии',
+        source='excursion-band-size',
+        required=False 
+    )
+    excursion_format = serializers.CharField(
+        label='Формат экскурсии',
+        required=False 
+    )
 
 
 

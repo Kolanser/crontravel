@@ -145,10 +145,32 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 [excursion_id]
             )
             obj = dictfetchall(cursor)
-        try:
-            return obj[0]
-        except:
+        if not obj:
             raise Http404
+        with connection.cursor() as cursor:
+            excursion_id = self.kwargs['excursion_id']
+            cursor.execute(
+                """
+                SELECT * FROM b0crontrav_betact.wp_postmeta
+                where post_id = %s
+                """,
+                [excursion_id]
+            )
+            excursion_meta = dictfetchall(cursor)
+        excursion_meta_dict = {meta['meta_key']:meta['meta_value'] for meta in excursion_meta}
+        excursion = obj[0] | excursion_meta_dict
+        photo_id = excursion.get('_thumbnail_id')
+        if photo_id:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT guid FROM b0crontrav_betact.wp_posts
+                    where ID = %s
+                    """,
+                    [photo_id]
+                )
+                excursion['photo'] = cursor.fetchone()[0]
+        return excursion    
 
 
 class LocationListAPIView(generics.ListAPIView):
@@ -171,9 +193,11 @@ class LocationListAPIView(generics.ListAPIView):
             results = dictfetchall(cursor)
         return results
 
+
 class LocationListExcursionsAPIView(generics.ListAPIView):
     """Получение списка экскурсий по городу."""
     serializer_class = LocationListExcursionsSerializer
+    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         results = []
@@ -181,67 +205,77 @@ class LocationListExcursionsAPIView(generics.ListAPIView):
             location_id = self.kwargs['location_id']
             cursor.execute(
                 """
-                SELECT * FROM b0crontrav_betact.wp_posts
-                where post_type = "excursions"
-                and post_status = "publish"
-                and ID in (SELECT object_id FROM b0crontrav_betact.wp_term_relationships
-                WHERE term_taxonomy_id = 
-                    (SELECT term_taxonomy_id FROM b0crontrav_betact.wp_term_taxonomy
-                    WHERE taxonomy = "location"
-                    AND term_id = %s)
-                )
+                SELECT posts.*, wp_terms.name as excursion_format
+                FROM wp_posts posts
+                INNER JOIN wp_term_relationships relationships
+                ON posts.ID = relationships.object_id
+                INNER JOIN wp_terms
+                ON wp_terms.term_id = relationships.term_taxonomy_id
+                WHERE post_type = "excursions"
+                AND post_status = "publish"
+                AND ID in (
+                    SELECT object_id 
+                    FROM wp_term_relationships
+                    WHERE term_taxonomy_id = (
+                        SELECT term_taxonomy_id
+                        FROM wp_term_taxonomy
+                        WHERE taxonomy = "location"
+                            AND term_id = %s
+                        )
+                    )
+                AND relationships.term_taxonomy_id in 
+                    (
+                        SELECT term_taxonomy_id FROM wp_term_taxonomy
+                        WHERE term_id in 
+                            (
+                            SELECT term_id FROM wp_terms
+                            WHERE slug in ("group", "individual")
+                            )
+                    )
+                ORDER BY posts.menu_order
                 """,
                 [location_id]
             )
             results = dictfetchall(cursor)
+        group_slug = 'group'
+        individual_slug = 'individual'
+        ids_excursion = []
+        for excursion in results:
+            ids_excursion.append(excursion['ID'])
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM b0crontrav_betact.wp_postmeta
+                where post_id in %s
+                """,
+                [ids_excursion]
+            )
+            excursion_meta = dictfetchall(cursor)
+        for index, excursion in enumerate(results):
+            for meta in excursion_meta:
+                if meta['post_id'] == excursion['ID']:
+                    meta_key = meta['meta_key']
+                    results[index][meta_key] = meta['meta_value']
+                    excursion_meta.remove(meta)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT meta.post_id, posts.guid
+                FROM wp_postmeta as meta
+                JOIN wp_posts as posts
+                ON meta.meta_value = posts.ID
+                WHERE meta.post_id in %s
+                AND meta.meta_key = "_thumbnail_id"
+                """,
+                [ids_excursion]
+            )
+            excursion_photos = dictfetchall(cursor)
+        for index, excursion in enumerate(results):
+            for excursion_photo in excursion_photos:
+                if excursion_photo['post_id'] == excursion['ID']:
+                    # photo = excursion_photo['guid']
+                    results[index]['photo'] = excursion_photo['guid']
+                    excursion_photos.remove(excursion_photo)
         if not results:
             raise Http404
         return results
-
-# class ExcursionViewSet(viewsets.GenericViewSet):
-#     serializer_class = ExcursionSerializer
-#     pagination_class = PageNumberPagination
-
-#     def get_queryset(self):
-#         results = []
-#         with connection.cursor() as cursor:
-#             cursor.execute(
-#                 """
-#                 SELECT * FROM b0crontrav_betact.wp_posts 
-#                 WHERE post_type = "excursions" and post_status = "publish"
-#                 """
-#             )
-#             results = dictfetchall(cursor)
-#         return results
-
-#     def get_object(self):
-#         with connection.cursor() as cursor:
-#             excursion_id = self.kwargs['pk']
-#             cursor.execute(
-#                 """
-#                 SELECT * FROM b0crontrav_betact.wp_posts 
-#                 WHERE post_type = "excursions" and post_status = "publish"
-#                 and ID = %s
-#                 """,
-#                 [excursion_id]
-#             )
-#             obj = dictfetchall(cursor)
-#         try:
-#             return obj[0]
-#         except:
-#             raise Http404
-
-#     def list(self, request):
-#         queryset = self.get_queryset()
-#         page = self.paginate_queryset(queryset)
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(serializer.data)
-#         serializer = self.serializer_class(queryset, many=True)
-#         return Response(serializer.data)
-
-#     def retrieve(self, request, pk=None):
-#         excursion = self.get_object()
-#         serializer = self.serializer_class(excursion)
-#         return Response(serializer.data)
-    
