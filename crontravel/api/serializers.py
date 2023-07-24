@@ -4,10 +4,29 @@ from rest_framework import serializers
 class ExcursionMetaSerializer(serializers.Serializer):
     id = serializers.IntegerField(source='meta_id')
 
+class PhotoExcursionSerializer(serializers.Serializer):
+    """Сериализатор фотографий экскурсии."""
+    photo = serializers.CharField(
+        label='Фото экскурсии',
+        source='guid'
+    )
 
-class ExcursionSerializer(serializers.Serializer):
+
+class ExcursionRetrieveSerializer(serializers.Serializer):
     """Сериализатор для отправки обратной связи."""
 
+# - Программа тура - разбиение по дням(если тур многодневный) со списком локаций и описанием к ним
+# - Включено в стоимость
+# - Оплачивается отдельно
+# - Место сбора - адрес и координаты(для отображения точки на карте)
+# - Тур компания - Название, фото(лого)
+# - Тип экскурсии - если групповая, то еще поле “Размер группы”
+# - Точка старта
+# - Отзывы - список отзывов со следующими полями
+#     - Имя
+#     - Дата
+#     - Оценка
+#     - Описание
     id = serializers.IntegerField(
         source='ID',
         read_only=True,
@@ -21,6 +40,11 @@ class ExcursionSerializer(serializers.Serializer):
         source='excursion-duration',
         required=False
     )
+    description = serializers.CharField(
+        label='Описание экскурсии',
+        source='post_content',
+        required=False
+    )
 # - Количество человек в экскурсии
     movement = serializers.CharField(
         label='Транспорт',
@@ -32,7 +56,9 @@ class ExcursionSerializer(serializers.Serializer):
         source='tour-price',
         required=False
     )
-    photo = serializers.CharField(
+    photos = PhotoExcursionSerializer(
+        many=True,
+        read_only=True,
         label='Фото',
         required=False 
     )

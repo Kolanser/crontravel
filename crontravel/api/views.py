@@ -20,7 +20,7 @@ from rest_framework.filters import SearchFilter
 
 from rest_framework.views import APIView
 from .serializers import (
-    ExcursionSerializer,
+    ExcursionRetrieveSerializer,
     LocationListSerializer,
     LocationListExcursionsSerializer,
 )
@@ -113,7 +113,7 @@ def dictfetchall(cursor):
 
 class ExcursionListAPIView(generics.ListAPIView):
     """Получение списка экскурсий."""
-    serializer_class = ExcursionSerializer
+    serializer_class = ExcursionRetrieveSerializer
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -131,14 +131,14 @@ class ExcursionListAPIView(generics.ListAPIView):
 
 class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
     """Получение отдельной экскурсию."""
-    serializer_class = ExcursionSerializer
+    serializer_class = ExcursionRetrieveSerializer
 
     def get_object(self):
         with connection.cursor() as cursor:
             excursion_id = self.kwargs['excursion_id']
             cursor.execute(
                 """
-                SELECT * FROM b0crontrav_betact.wp_posts 
+                SELECT * FROM wp_posts 
                 WHERE post_type = "excursions" and post_status = "publish"
                 AND ID = %s
                 """,
@@ -151,7 +151,7 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
             excursion_id = self.kwargs['excursion_id']
             cursor.execute(
                 """
-                SELECT * FROM b0crontrav_betact.wp_postmeta
+                SELECT * FROM wp_postmeta
                 where post_id = %s
                 """,
                 [excursion_id]
@@ -159,17 +159,22 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
             excursion_meta = dictfetchall(cursor)
         excursion_meta_dict = {meta['meta_key']:meta['meta_value'] for meta in excursion_meta}
         excursion = obj[0] | excursion_meta_dict
-        photo_id = excursion.get('_thumbnail_id')
-        if photo_id:
+        count_photo = excursion.get('excursion-gallery')
+        if count_photo:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT guid FROM b0crontrav_betact.wp_posts
-                    where ID = %s
+                    SELECT wp_posts.guid
+                    FROM wp_postmeta
+                    INNER JOIN wp_posts
+                    ON wp_posts.ID = wp_postmeta.meta_value
+                    WHERE wp_postmeta.post_id = %s
+                    AND meta_key
+                    LIKE "excursion-gallery_%%_excursion-gallery-image"
                     """,
-                    [photo_id]
+                    [excursion_id]
                 )
-                excursion['photo'] = cursor.fetchone()[0]
+                excursion['photos'] = dictfetchall(cursor)
         return excursion    
 
 
@@ -183,10 +188,10 @@ class LocationListAPIView(generics.ListAPIView):
             cursor.execute(
                 """
                 SELECT term_id, name
-                FROM b0crontrav_betact.wp_terms
+                FROM wp_terms
                 WHERE term_id IN (
                     SELECT DISTINCT term_id
-                    FROM b0crontrav_betact.wp_term_taxonomy
+                    FROM wp_term_taxonomy
                     WHERE taxonomy = "location")
                 """
             )
@@ -273,7 +278,6 @@ class LocationListExcursionsAPIView(generics.ListAPIView):
         for index, excursion in enumerate(results):
             for excursion_photo in excursion_photos:
                 if excursion_photo['post_id'] == excursion['ID']:
-                    # photo = excursion_photo['guid']
                     results[index]['photo'] = excursion_photo['guid']
                     excursion_photos.remove(excursion_photo)
         if not results:
