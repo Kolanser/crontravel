@@ -225,6 +225,19 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 [excursion_id]
             )
             excursion['type'] = dictfetchall(cursor)[0].get('name')
+        if excursion['comment_count']:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT comment_author, comment_date, comment_content
+                    FROM wp_comments
+                    WHERE comment_post_ID = %s
+                    AND comment_approved = "1"
+                    ORDER BY comment_date DESC
+                    """,
+                    [excursion_id]
+                )
+                excursion['comments'] = dictfetchall(cursor)
         
         return excursion    
 
