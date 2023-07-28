@@ -25,7 +25,6 @@ class AgencyExcursionSerializer(serializers.Serializer):
 class ExcursionRetrieveSerializer(serializers.Serializer):
     """Сериализатор для отправки обратной связи."""
 
-# - Тур компания - Название, фото(лого)
 # - Тип экскурсии - если групповая, то еще поле “Размер группы”
 # - Отзывы - список отзывов со следующими полями
 #     - Имя
@@ -89,6 +88,11 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         label='Количество комментариев',
         read_only=True,
     )
+    type_excursion = serializers.CharField(
+        label='Тип экскурсии',
+        source='type',
+        required=False 
+    )
     band_size = serializers.CharField(
         label='Количество человек в экскурсии',
         source='excursion-band-size',
@@ -100,6 +104,8 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         required=False 
     )
     agency = AgencyExcursionSerializer(read_only=True)
+
+
 
 class LocationListSerializer(serializers.Serializer):
     """Сериализатор для списка городов."""

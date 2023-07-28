@@ -193,7 +193,7 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 WHERE term_taxonomy_id = (
                 SELECT term_taxonomy_id FROM wp_term_relationships
                 WHERE object_id = %s
-                AND term_taxonomy_id IN  (
+                AND term_taxonomy_id IN (
                     SELECT term_taxonomy_id FROM wp_term_taxonomy
                     WHERE taxonomy = "agency"
                     )
@@ -205,6 +205,26 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 [excursion_id]
             )
             excursion['agency'] = dictfetchall(cursor)[0]
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT wp_terms.name
+                FROM wp_term_relationships
+                INNER JOIN wp_terms
+                ON wp_terms.term_id = wp_term_relationships.term_taxonomy_id
+                WHERE term_taxonomy_id IN (
+                SELECT term_taxonomy_id FROM wp_term_taxonomy
+                WHERE term_id in 
+                    (
+                    SELECT term_id FROM wp_terms
+                    WHERE slug in ("group", "individual")
+                    )
+                )
+                AND object_id = %s
+                """,
+                [excursion_id]
+            )
+            excursion['type'] = dictfetchall(cursor)[0].get('name')
         
         return excursion    
 
@@ -273,8 +293,6 @@ class LocationListExcursionsAPIView(generics.ListAPIView):
                 [location_id]
             )
             results = dictfetchall(cursor)
-        group_slug = 'group'
-        individual_slug = 'individual'
         ids_excursion = []
         for excursion in results:
             ids_excursion.append(excursion['ID'])
