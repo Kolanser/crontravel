@@ -6,7 +6,6 @@ from .views import (
     ExcursionRetrieveAPIView,
     LocationListAPIView,
     LocationListExcursionsAPIView
-#     CompanyViewSet,
 #     ReviewViewSet
 )
 
@@ -24,5 +23,5 @@ urlpatterns = [
     path('excursions/', ExcursionListAPIView.as_view(), name='excursion_list'),
     path('excursions/<int:excursion_id>/', ExcursionRetrieveAPIView.as_view(), name='excursions_detail'),
     path('locations/', LocationListAPIView.as_view(), name='location-list'),
-    path('locations/<int:location_id>/', LocationListExcursionsAPIView.as_view(), name='location-detail')
+    path('locations/<int:location_id>/', LocationListExcursionsAPIView.as_view(), name='location-detail'),
 ]

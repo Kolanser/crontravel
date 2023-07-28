@@ -175,6 +175,37 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                     [excursion_id]
                 )
                 excursion['photos'] = dictfetchall(cursor)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT wp_terms.name, wp_posts.guid
+                FROM wp_termmeta
+                INNER JOIN wp_terms
+                ON wp_terms.term_id = wp_termmeta.term_id
+                INNER JOIN wp_posts
+                ON wp_posts.ID = wp_termmeta.meta_value
+                WHERE wp_terms.term_id = (
+                SELECT term_id
+                FROM wp_terms
+                WHERE term_id = (
+                SELECT term_id
+                FROM wp_term_taxonomy
+                WHERE term_taxonomy_id = (
+                SELECT term_taxonomy_id FROM wp_term_relationships
+                WHERE object_id = %s
+                AND term_taxonomy_id IN  (
+                    SELECT term_taxonomy_id FROM wp_term_taxonomy
+                    WHERE taxonomy = "agency"
+                    )
+                )
+                )
+                )
+                AND wp_termmeta.meta_key = "agency-photo"
+                """,
+                [excursion_id]
+            )
+            excursion['agency'] = dictfetchall(cursor)[0]
+        
         return excursion    
 
 

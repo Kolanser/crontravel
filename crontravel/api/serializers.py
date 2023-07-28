@@ -11,17 +11,22 @@ class PhotoExcursionSerializer(serializers.Serializer):
         source='guid'
     )
 
+class AgencyExcursionSerializer(serializers.Serializer):
+    """Сериализатор агенства экскурсии."""
+    name = serializers.CharField(
+        label='Наименование туристического оператора',
+    )
+    image = serializers.CharField(
+        label='Фото экскурсии',
+        source='guid'
+    )
+
 
 class ExcursionRetrieveSerializer(serializers.Serializer):
     """Сериализатор для отправки обратной связи."""
 
-# - Программа тура - разбиение по дням(если тур многодневный) со списком локаций и описанием к ним
-# - Включено в стоимость
-# - Оплачивается отдельно
-# - Место сбора - адрес и координаты(для отображения точки на карте)
 # - Тур компания - Название, фото(лого)
 # - Тип экскурсии - если групповая, то еще поле “Размер группы”
-# - Точка старта
 # - Отзывы - список отзывов со следующими полями
 #     - Имя
 #     - Дата
@@ -45,7 +50,6 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         source='post_content',
         required=False
     )
-# - Количество человек в экскурсии
     movement = serializers.CharField(
         label='Транспорт',
         source='excursion-movement',
@@ -56,19 +60,33 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         source='tour-price',
         required=False
     )
+    price_children = serializers.CharField(
+        label='Цена за ребенка',
+        source='tour-price_children',
+        required=False
+    )
+    children_age = serializers.CharField(
+        label='Возраст ребенка',
+        source='tour-price_children-age',
+        required=False
+    )
+    start_coordinates = serializers.CharField(
+        label='Место сбора (координаты)',
+        source='excursion-map_yandex',
+        required=False
+    )
     photos = PhotoExcursionSerializer(
         many=True,
         read_only=True,
         label='Фото',
         required=False 
     )
-    raiting = serializers.FloatField(
+    rating = serializers.FloatField(
         label='Оценка(рейтинг)',
         required=False 
     )
     comment_count = serializers.IntegerField(
         label='Количество комментариев',
-        help_text = 'dddd',
         read_only=True,
     )
     band_size = serializers.CharField(
@@ -76,7 +94,12 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         source='excursion-band-size',
         required=False 
     )
- 
+    start_city = serializers.CharField(
+        label = 'Точка старта',
+        source='excursion-start-city',
+        required=False 
+    )
+    agency = AgencyExcursionSerializer(read_only=True)
 
 class LocationListSerializer(serializers.Serializer):
     """Сериализатор для списка городов."""
@@ -128,7 +151,6 @@ class LocationListExcursionsSerializer(serializers.Serializer):
         label='Формат экскурсии',
         required=False 
     )
-
 
 
 
