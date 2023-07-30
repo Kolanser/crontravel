@@ -121,6 +121,10 @@ class ExcursionRetrieveSerializer(serializers.Serializer):
         required=False,
         many=True
     )
+    slug = serializers.CharField(
+        label='Slug',
+        source='post_name'
+    )
 
 
 class LocationListSerializer(serializers.Serializer):

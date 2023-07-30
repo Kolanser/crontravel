@@ -128,12 +128,6 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 [excursion_id]
             )
             agency_info = dictfetchall(cursor)[0]
-        # if len(agency_info) > 1:
-        #     for info in agency_info:
-        #         if info['meta_key'] == 'agency-photo':
-        #             excursion['agency'] = info
-        #             break
-        # else:
         excursion['agency'] = agency_info
         with connection.cursor() as cursor:
             cursor.execute(
@@ -144,7 +138,7 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                 ON wp_terms.term_id = wp_term_relationships.term_taxonomy_id
                 WHERE term_taxonomy_id IN (
                 SELECT term_taxonomy_id FROM wp_term_taxonomy
-                WHERE term_id in 
+                WHERE term_id in
                     (
                     SELECT term_id FROM wp_terms
                     WHERE slug in ("group", "individual")
