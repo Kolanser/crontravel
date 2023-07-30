@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from os import getenv
 from pathlib import Path
-
+from rest_framework.pagination import PageNumberPagination
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
     'django_filters',
     'rest_framework'
 ]
@@ -139,4 +140,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': PageNumberPagination
 }
