@@ -15,7 +15,6 @@ from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter
 
 from rest_framework.views import APIView
@@ -26,80 +25,6 @@ from .serializers import (
 )
 from django.http import Http404
 from django.db import connection
-
-
-# class ExcursionViewSet(viewsets.ReadOnlyModelViewSet):
-#     """Получение экскурсий."""
-#     queryset = Excursion.objects.all()
-#     queryset = Excursion.objects.annotate(
-#         rating=Avg('reviews__score'),
-#         count_reviews=Count('reviews')
-#     )
-#     serializer_class = ExcursionRetrieveSerializer
-#     filter_backends = (DjangoFilterBackend, )
-#     filterset_class = ExcursionFilter
-#     pagination_class = PageNumberPagination
-#     filter_backends = (SearchFilter, )
-#     search_fields = ('city__name', 'gathering_place', 'starting_point', )
-
-#     def get_serializer_class(self):
-#         if self.action == 'list':
-#             return ExcursionListSerializer
-#         return ExcursionRetrieveSerializer
-
-#     @action(methods=['post'], detail=True)
-#     def application(self, request, pk):
-#         """Подать заявку на экскурсию."""
-#         serializer = ApplicationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             excursion = self.get_object()
-#             serializer.save(excursion=excursion)
-#             return Response(
-#                 {'status': 'Заявка успешно отправлена'},
-#                 status=status.HTTP_200_OK
-#             )
-#         return Response(
-#             serializer.errors,
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-
-# class CompanyViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-#     """Получение тур компаний."""
-#     queryset = Company.objects.all()
-#     serializer_class = CompanySerializer
-
-
-# class ReviewViewSet(viewsets.ModelViewSet):
-#     """Получение и добавление отзывов."""
-
-#     def get_serializer_class(self):
-#         if self.request.method in ('POST', 'PATCH', 'PUT',):
-#             return ReviewWriteSerializer
-#         return ReviewSerializer
-
-#     def get_client_ip(self, request):
-#         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-#         if x_forwarded_for:
-#             ip = x_forwarded_for.split(',')[0]
-#         else:
-#             ip = request.META.get('REMOTE_ADDR')
-#         return ip
-
-#     def get_queryset(self, *args, **kwargs):
-#         excursion_id = int(self.kwargs.get('excursion_id'))
-#         excursion = get_object_or_404(Excursion, id=excursion_id)
-#         return excursion.reviews.filter(public=True)
-
-#     def perform_create(self, serializer):
-#         excursion_id = self.kwargs.get('excursion_id')
-#         excursion = get_object_or_404(Excursion, id=excursion_id)
-#         ip = self.get_client_ip(self.request)
-#         serializer.save(
-#             excursion=excursion,
-#             ip=ip,
-#             public=False
-#         )
 
 
 def dictfetchall(cursor):
@@ -114,7 +39,6 @@ def dictfetchall(cursor):
 class ExcursionListAPIView(generics.ListAPIView):
     """Получение списка экскурсий."""
     serializer_class = ExcursionRetrieveSerializer
-    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         results = []
@@ -178,16 +102,13 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT wp_terms.name, wp_posts.guid
-                FROM wp_termmeta
-                INNER JOIN wp_terms
-                ON wp_terms.term_id = wp_termmeta.term_id
-                INNER JOIN wp_posts
-                ON wp_posts.ID = wp_termmeta.meta_value
-                WHERE wp_terms.term_id = (
-                SELECT term_id
+                SELECT wp_terms.name, wp_termmeta.meta_key, wp_posts.guid
                 FROM wp_terms
-                WHERE term_id = (
+                LEFT JOIN wp_termmeta
+                ON wp_termmeta.term_id = wp_terms.term_id
+				LEFT JOIN wp_posts
+                ON wp_posts.ID = wp_termmeta.meta_value
+				WHERE wp_terms.term_id = (
                 SELECT term_id
                 FROM wp_term_taxonomy
                 WHERE term_taxonomy_id = (
@@ -199,12 +120,21 @@ class ExcursionRetrieveAPIView(generics.RetrieveAPIView):
                     )
                 )
                 )
+                AND (
+                    wp_termmeta.meta_key is NULL
+                    OR wp_termmeta.meta_key = "agency-photo"
                 )
-                AND wp_termmeta.meta_key = "agency-photo"
                 """,
                 [excursion_id]
             )
-            excursion['agency'] = dictfetchall(cursor)[0]
+            agency_info = dictfetchall(cursor)[0]
+        # if len(agency_info) > 1:
+        #     for info in agency_info:
+        #         if info['meta_key'] == 'agency-photo':
+        #             excursion['agency'] = info
+        #             break
+        # else:
+        excursion['agency'] = agency_info
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -266,7 +196,6 @@ class LocationListAPIView(generics.ListAPIView):
 class LocationListExcursionsAPIView(generics.ListAPIView):
     """Получение списка экскурсий по городу."""
     serializer_class = LocationListExcursionsSerializer
-    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         results = []
